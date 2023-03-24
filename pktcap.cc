@@ -192,13 +192,12 @@ class capture {
     }
 
     const tcp_header* tcp = (tcp_header*)(fragment + ip_hdr_size);
+    const tcp_header* tcp = (tcp_header*)(fragment + sizeof(eth_header) + ip_hdr_size);
     uint8_t tcp_hdr_size = (tcp->data_offset >> 4) * 4;
-    if (fragment_size < (uint32_t)(ip_hdr_size + tcp_hdr_size)) {
-      return;
-    }
 
-    const uint8_t* payload = fragment + ip_hdr_size + tcp_hdr_size;
-    size_t payload_length = fragment_size - ip_hdr_size - tcp_hdr_size;
+    size_t offset = sizeof(eth_header) + ip_hdr_size + tcp_hdr_size;
+    const uint8_t* payload = fragment + offset;
+    size_t payload_length = fragment_size - offset;
 
     in_addr src_addr, dst_addr;
     src_addr.S_un.S_addr = ip->src_addr;
@@ -230,7 +229,7 @@ class capture {
     drop |= (!config_.rules.empty()) &&
             std::all_of(
                 config_.rules.begin(), config_.rules.end(), [&](const auto& r) {
-                  if (r.type != rule::allow) {
+                  if (r.type == rule::allow) {
                     std::string source = get_source(r);
                     if (r.pattern && !std::regex_match(source, *r.pattern)) {
                       return true;
