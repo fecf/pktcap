@@ -16,7 +16,17 @@ struct rule {
 };
 
 struct config {
+  enum {
+    raw,
+    ndis,
+  } method = raw;
+
+  // allow all packets by default and
+  // evaluate in the order of deny, allow
   std::vector<rule> rules;
+
+  std::optional<std::regex> network;
+
   std::function<void(const uint8_t*,
                      size_t,
                      const std::string&,
